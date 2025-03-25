@@ -1,0 +1,71 @@
+#include <iostream>
+#include <string>
+
+class Car {
+private:
+    const std::string brand;       // Марка (неизменяемая после создания)
+    const std::string model;       // Модель (неизменяемая после создания)
+    const int year;                // Год выпуска (неизменяемый)
+    
+    std::string color;            // Цвет (можно изменить)
+    double mileage;               // Пробег (можно изменить)
+    double price;                 // Стоимость (можно изменить)
+
+public:
+    Car(const std::string& b, const std::string& m, int y, 
+        const std::string& c, double mil, double p)
+        : brand(b), model(m), year(y), color(c), mileage(mil), price(p) {}
+    
+    Car(const Car& other)
+        : brand(other.brand), model(other.model), year(other.year),
+          color(other.color), mileage(other.mileage), price(other.price) {}
+    
+    Car& operator=(const Car& other) {
+        if (this != &other) {
+            // const-члены нельзя изменить, копируем только изменяемые
+            color = other.color;
+            mileage = other.mileage;
+            price = other.price;
+        }
+        return *this;
+    }
+    
+    ~Car() = default;
+
+    const std::string& getBrand() const { return brand; }
+    const std::string& getModel() const { return model; }
+    int getYear() const { return year; }
+    const std::string& getColor() const { return color; }
+    double getMileage() const { return mileage; }
+    double getPrice() const { return price; }
+    
+    void setColor(const std::string& newColor) { color = newColor; }
+    void setMileage(double newMileage) { mileage = newMileage; }
+    void setPrice(double newPrice) { price = newPrice; }
+    
+    friend std::ostream& operator<<(std::ostream& os, const Car& car);
+};
+
+std::ostream& operator<<(std::ostream& os, const Car& car) {
+    os << "Car: " << car.brand << " " << car.model << " (" << car.year << ")\n"
+       << "Color: " << car.color << "\n"
+       << "Mileage: " << car.mileage << " km\n"
+       << "Price: $" << car.price;
+    return os;
+}
+
+int main() {
+    // Пример использования
+    Car myCar("Toyota", "Camry", 2020, "Silver", 15000.5, 25000.0);
+    
+    std::cout << myCar << "\n\n";
+
+    myCar.setColor("Red");
+    myCar.setMileage(18000.0);
+    myCar.setPrice(23000.0);
+    
+    std::cout << "After modifications:\n";
+    std::cout << myCar << "\n";
+    
+    return 0;
+}

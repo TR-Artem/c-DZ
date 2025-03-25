@@ -1,0 +1,55 @@
+#include <iostream>
+
+class Vehicle {
+public:
+    virtual void move(double time) = 0;
+    virtual ~Vehicle() {}
+};
+
+class LandVehicle : public Vehicle {
+protected:
+    double currentVelocity;
+    double distance;
+
+public:
+    LandVehicle(double velocity = 0.0, double dist = 0.0) 
+        : currentVelocity(velocity), distance(dist) {}
+
+    double getCurrentVelocity() const { return currentVelocity; }
+    void setCurrentVelocity(double velocity) { currentVelocity = velocity; }
+    
+    double getDistance() const { return distance; }
+    void setDistance(double dist) { distance = dist; }
+};
+
+class Car : public LandVehicle {
+public:
+    Car(double velocity = 0.0, double dist = 0.0) 
+        : LandVehicle(velocity, dist) {}
+
+    void move(double time) override {
+        distance += currentVelocity * time;
+        std::cout << "Car moved. New distance: " << distance << " km\n";
+    }
+};
+
+class Truck : public LandVehicle {
+public:
+    Truck(double velocity = 0.0, double dist = 0.0) 
+        : LandVehicle(velocity, dist) {}
+
+    void move(double time) override {
+        distance += currentVelocity * time * 0.9;
+        std::cout << "Truck moved. New distance: " << distance << " km\n";
+    }
+};
+
+int main() {
+    Car car(60.0, 100.0);
+    car.move(1.5);
+    
+    Truck truck(50.0, 200.0);
+    truck.move(2.0);
+    
+    return 0;
+}

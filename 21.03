@@ -1,0 +1,105 @@
+#include "wapi_oop.h"
+#include <vector>
+#include <cmath>
+
+class MainWindow : public Window {
+private:
+    PaintBox pb;
+    std::vector<double> x, y, z;
+    
+    void CalculateLorenz() {
+        // Начальные условия
+        double x0 = 4.0, y0 = -2.0, z0 = 0.0;
+        double h = 0.01;
+        int N = 10000; // Увеличил количество точек для более плавного графика
+        
+        x.clear(); y.clear(); z.clear();
+        x.push_back(x0);
+        y.push_back(y0);
+        z.push_back(z0);
+        
+        // Метод Эйлера
+        for (int i = 0; i < N; i++) {
+            double xn = x.back() + h * 10.0 * (y.back() - x.back());
+            double yn = y.back() + h * (x.back() * (28.0 - z.back()) - y.back());
+            double zn = z.back() + h * (x.back() * y.back() - (8.0/3.0) * z.back());
+            
+            x.push_back(xn);
+            y.push_back(yn);
+            z.push_back(zn);
+        }
+    }
+    
+    void DrawLorenz() {
+        // Найдем минимальные и максимальные значения для масштабирования
+        double minX = x[0], maxX = x[0];
+        double minZ = z[0], maxZ = z[0];
+        
+        for (size_t i = 1; i < x.size(); i++) {
+            if (x[i] < minX) minX = x[i];
+            if (x[i] > maxX) maxX = x[i];
+            if (z[i] < minZ) minZ = z[i];
+            if (z[i] > maxZ) maxZ = z[i];
+        }
+        
+        // Размеры PaintBox
+        RECT rect;
+        GetClientRect(pb.GetHandle(), &rect);
+        int width = rect.right - rect.left;
+        int height = rect.bottom - rect.top;
+        
+        // Масштабируем координаты
+        auto scaleX = [=](double val) -> int {
+            return (int)((val - minX) / (maxX - minX) * (width - 20) + 10);
+        };
+        
+        auto scaleZ = [=](double val) -> int {
+            return height - (int)((val - minZ) / (maxZ - minZ) * (height - 20) + 10);
+        };
+        
+        // Рисуем траекторию
+        HDC hdc = pb.BeginDraw();
+        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
+        SelectObject(hdc, hPen);
+        
+        MoveToEx(hdc, scaleX(x[0]), scaleZ(z[0]), NULL);
+        for (size_t i = 1; i < x.size(); i++) {
+            LineTo(hdc, scaleX(x[i]), scaleZ(z[i]));
+            
+            // Меняем цвет постепенно для визуализации времени
+            if (i % 500 == 0) {
+                DeleteObject(hPen);
+                int r = (i * 255 / x.size());
+                int g = 0;
+                int b = 255 - (i * 255 / x.size());
+                hPen = CreatePen(PS_SOLID, 1, RGB(r, g, b));
+                SelectObject(hdc, hPen);
+                MoveToEx(hdc, scaleX(x[i]), scaleZ(z[i]), NULL);
+            }
+        }
+        
+        DeleteObject(hPen);
+        pb.EndDraw();
+    }
+    
+public:
+    MainWindow() : Window(L"Аттрактор Лоренца", 800, 600) {
+        CalculateLorenz();
+        
+        pb.Create(WS_VISIBLE | WS_CHILD, 10, 10, 760, 540, this);
+        DrawLorenz();
+    }
+};
+
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+    MainWindow wnd;
+    wnd.Show(nCmdShow);
+    
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+    
+    return 0;
+}
